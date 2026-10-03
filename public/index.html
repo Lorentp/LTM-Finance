@@ -1,0 +1,259 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+  <meta name="theme-color" content="#123d2e" />
+  <title>Las Tres Marías · Finanzas</title>
+  <link rel="stylesheet" href="/css/styles.css" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+</head>
+<body>
+  <div id="toast" class="toast"></div>
+
+  <section id="loginView" class="login-shell">
+    <div class="login-card">
+      <div class="brand-mark">LTM</div>
+      <h1>Las Tres Marías</h1>
+      <p>Gestión financiera y flujo de caja</p>
+      <form id="loginForm">
+        <label>Usuario<input id="loginUser" autocomplete="username" required></label>
+        <label>Contraseña<input id="loginPass" type="password" autocomplete="current-password" required></label>
+        <button class="btn primary wide" type="submit">Ingresar</button>
+      </form>
+      <small>Los movimientos financieros quedan protegidos detrás del inicio de sesión.</small>
+    </div>
+  </section>
+
+  <div id="appView" class="app hidden">
+    <aside class="sidebar" id="sidebar">
+      <div class="brand"><div class="brand-mark small">LTM</div><div><strong>Las Tres Marías</strong><span>Finanzas</span></div></div>
+      <nav>
+        <button data-page="dashboard" class="nav-btn active">⌂ <span>Inicio</span></button>
+        <button data-page="transactions" class="nav-btn">↔ <span>Movimientos</span></button>
+        <button data-page="upcoming" class="nav-btn">◷ <span>Próximos</span></button>
+        <button data-page="accounts" class="nav-btn">▣ <span>Cuentas</span></button>
+        <button data-page="internal" class="nav-btn">⇄ <span>Cuentas propias</span></button>
+        <button data-page="providers" class="nav-btn">◎ <span>Proveedores</span></button>
+        <button data-page="employees" class="nav-btn">♙ <span>Empleados</span></button>
+        <button data-page="import" class="nav-btn">⇧ <span>Importar Excel</span></button>
+        <button data-page="bankcontrol" class="nav-btn">✓ <span>Control bancario</span></button>
+        <button data-page="reports" class="nav-btn">▤ <span>Reportes</span></button>
+      </nav>
+      <button id="logoutBtn" class="nav-btn logout">⇥ <span>Salir</span></button>
+    </aside>
+
+    <main class="main">
+      <header class="topbar">
+        <button id="menuBtn" class="icon-btn mobile-only">☰</button>
+        <div><h2 id="pageTitle">¿Cómo estamos?</h2><p id="todayLabel"></p></div>
+        <div class="top-actions">
+          <button class="btn voice" id="voiceBtn">🎙️ Cargar por voz</button>
+          <button class="btn primary" id="newTxBtn">＋ Movimiento</button>
+        </div>
+      </header>
+
+      <section id="page-dashboard" class="page active">
+        <div class="hero-row">
+          <article class="metric primary-card"><span>Disponible hoy</span><strong id="mCurrent">$ 0</strong><small>saldo real de todas las cuentas</small></article>
+          <article class="metric"><span>Por cobrar</span><strong id="mReceivable">$ 0</strong><small>movimientos pendientes</small></article>
+          <article class="metric"><span>Por pagar</span><strong id="mPayable">$ 0</strong><small>compromisos pendientes</small></article>
+          <article class="metric"><span>Saldo proyectado</span><strong id="mProjected">$ 0</strong><small>si se cumple todo lo cargado</small></article>
+        </div>
+
+        <div class="alert-grid">
+          <div class="mini-card"><span>Próximos 30 días · entra</span><strong id="m30in">$ 0</strong></div>
+          <div class="mini-card"><span>Próximos 30 días · sale</span><strong id="m30out">$ 0</strong></div>
+          <div class="mini-card danger"><span>Vencido por pagar</span><strong id="mOverdue">$ 0</strong></div>
+        </div>
+
+        <div class="grid two">
+          <article class="panel"><div class="panel-head"><div><h3>Saldo proyectado</h3><p>Próximos 12 meses según vencimientos cargados</p></div></div><div class="chart-wrap"><canvas id="projectionChart"></canvas></div></article>
+          <article class="panel"><div class="panel-head"><div><h3>Egresos por categoría</h3><p>Solo egresos ya pagados</p></div></div><div class="chart-wrap"><canvas id="categoryChart"></canvas></div></article>
+        </div>
+        <article class="panel"><div class="panel-head"><div><h3>Próximos movimientos</h3><p>Lo que viene primero</p></div><button class="link-btn" data-go="upcoming">Ver todos</button></div><div id="dashboardUpcoming" class="list"></div></article>
+      </section>
+
+      <section id="page-transactions" class="page">
+        <article class="panel">
+          <div class="panel-head wrap"><div><h3>Movimientos</h3><p>Ingresos y egresos realizados o pendientes</p></div><div class="toolbar"><input id="txSearch" placeholder="Buscar proveedor, categoría..."><select id="txType"><option value="">Todos</option><option value="income">Ingresos</option><option value="expense">Egresos</option></select><select id="txStatus"><option value="">Todos los estados</option><option value="pending">Pendientes</option><option value="paid">Pagados/Cobrados</option><option value="cancelled">Cancelados</option></select><select id="txPayment"><option value="">Todos los medios</option><option value="cash">Efectivo</option><option value="transfer">Transferencia</option><option value="check">Cheque</option><option value="echeck">Cheque electrónico</option><option value="unspecified">Sin definir</option></select><select id="txControlled"><option value="">Control: todos</option><option value="true">Controlados</option><option value="false">Sin controlar</option></select></div></div>
+          <div class="table-wrap"><table><thead><tr><th>Controlado</th><th>Vence</th><th>Tipo</th><th>Cliente / Proveedor</th><th>Categoría</th><th>Monto</th><th>Estado</th><th>Medio de pago</th><th>Últimos 5 cheque / E-cheq</th><th>Cuenta</th><th></th></tr></thead><tbody id="txTable"></tbody></table></div>
+        </article>
+      </section>
+
+      <section id="page-upcoming" class="page">
+        <div class="section-head"><div><h3>Agenda financiera</h3><p>Pagos y cobros pendientes ordenados por fecha.</p></div><button class="btn secondary" id="installmentBtn">＋ Compra en cuotas</button></div>
+        <div class="grid two"><article class="panel"><h3>Próximos egresos</h3><div id="upcomingExpenses" class="list"></div></article><article class="panel"><h3>Próximos ingresos</h3><div id="upcomingIncome" class="list"></div></article></div>
+      </section>
+
+      <section id="page-accounts" class="page">
+        <div class="section-head"><div><h3>Cuentas</h3><p>Banco, efectivo, billeteras u otras disponibilidades.</p></div><button class="btn primary" id="newAccountBtn">＋ Cuenta</button></div>
+        <div id="accountsGrid" class="cards-grid"></div>
+      </section>
+
+      <section id="page-internal" class="page">
+        <div class="section-head"><div><h3>Movimientos entre cuentas propias</h3><p>Transferencias internas de Las Tres Marías. No se computan como ingreso ni egreso de la empresa.</p></div><button class="btn primary" id="newInternalBtn">＋ Transferencia propia</button></div>
+        <article class="panel"><div class="table-wrap"><table><thead><tr><th>Fecha</th><th>Cuenta origen</th><th>Cuenta destino</th><th>Monto</th><th>Estado</th><th>Control origen</th><th>Control destino</th><th>Notas</th><th></th></tr></thead><tbody id="internalTable"></tbody></table></div></article>
+      </section>
+
+      <section id="page-providers" class="page">
+        <div class="section-head"><div><h3>Proveedores / clientes frecuentes</h3><p>Cada proveedor/cliente puede tener una o varias categorías asociadas.</p></div><button class="btn primary" id="newProviderBtn">＋ Proveedor / cliente</button></div>
+        <article class="panel import-panel"><div class="panel-head wrap"><div><h3>Carga inicial masiva</h3><p>Ideal para la primera puesta en marcha.</p></div></div><div class="import-upload"><a class="btn secondary" href="/templates/Plantilla_Proveedores_Clientes_Las_Tres_Marias.xlsx" download>⬇ Plantilla proveedores/clientes</a><label>Excel (.xlsx)<input id="providerImportFile" type="file" accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"></label><button class="btn primary" id="providerImportPreviewBtn" type="button">Revisar Excel</button></div><p id="providerImportInfo" class="hint">La app detecta existentes, categorías y filas nuevas antes de guardar.</p></article>
+        <article id="providerImportReview" class="panel hidden"><div class="panel-head"><div><h3>Revisión de proveedores/clientes</h3><p>Nada se guarda hasta confirmar.</p></div></div><div class="table-wrap"><table><thead><tr><th>Fila</th><th>Nombre</th><th>Tipo</th><th>Categorías</th><th>Notas</th><th>Resultado</th><th></th></tr></thead><tbody id="providerImportTable"></tbody></table></div><div class="import-footer"><strong id="providerImportCount"></strong><button class="btn primary" id="providerImportCommitBtn" type="button">Confirmar importación</button></div></article>
+        <article class="panel"><div class="table-wrap"><table><thead><tr><th>Nombre</th><th>Tipo</th><th>Categorías</th><th>Notas</th><th></th></tr></thead><tbody id="providerTable"></tbody></table></div></article>
+      </section>
+
+      <section id="page-employees" class="page">
+        <div class="section-head"><div><h3>Empleados</h3><p>Solo aparecen al cargar movimientos de categoría Sueldos.</p></div><button class="btn primary" id="newEmployeeBtn">＋ Empleado</button></div>
+        <article class="panel import-panel"><div class="panel-head wrap"><div><h3>Carga inicial masiva</h3><p>Importá todos los empleados desde una plantilla simple.</p></div></div><div class="import-upload"><a class="btn secondary" href="/templates/Plantilla_Empleados_Las_Tres_Marias.xlsx" download>⬇ Plantilla empleados</a><label>Excel (.xlsx)<input id="employeeImportFile" type="file" accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"></label><button class="btn primary" id="employeeImportPreviewBtn" type="button">Revisar Excel</button></div><p id="employeeImportInfo" class="hint">Los nombres repetidos se detectan para evitar duplicados.</p></article>
+        <article id="employeeImportReview" class="panel hidden"><div class="panel-head"><div><h3>Revisión de empleados</h3><p>Nada se guarda hasta confirmar.</p></div></div><div class="table-wrap"><table><thead><tr><th>Fila</th><th>Nombre</th><th>Notas</th><th>Resultado</th><th></th></tr></thead><tbody id="employeeImportTable"></tbody></table></div><div class="import-footer"><strong id="employeeImportCount"></strong><button class="btn primary" id="employeeImportCommitBtn" type="button">Confirmar importación</button></div></article>
+        <article class="panel"><div class="table-wrap"><table><thead><tr><th>Nombre</th><th>Notas</th><th></th></tr></thead><tbody id="employeeTable"></tbody></table></div></article>
+      </section>
+
+      <section id="page-import" class="page">
+        <div class="section-head"><div><h3>Importar movimientos desde Excel</h3><p>Subí la planilla, revisá todo y recién al confirmar se generan los movimientos.</p></div></div>
+        <article class="panel import-panel">
+          <div class="import-upload">
+            <a class="btn secondary" href="/templates/Plantilla_Importacion_Las_Tres_Marias.xlsx" download>⬇ Descargar plantilla Excel</a>
+            <label>Archivo Excel (.xlsx)<input id="importFile" type="file" accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"></label>
+            <button class="btn primary" id="previewImportBtn" type="button">Analizar Excel</button>
+          </div>
+          <p id="importInfo" class="hint">Todavía no cargaste un archivo. Usá la plantilla recomendada. Si faltan categoría, cuenta, medio de pago u otros datos, podés completarlos en la revisión antes de importar.</p>
+        </article>
+
+        <article id="importReview" class="panel hidden">
+          <div class="panel-head wrap"><div><h3>Revisión antes de importar</h3><p id="importSummary">Completá los campos marcados. Los proveedores/clientes nuevos se crearán automáticamente.</p></div></div>
+          <div class="bulk-grid">
+            <label>Tipo para todas<select id="bulkType"><option value="">No cambiar</option><option value="expense">Egreso</option><option value="income">Ingreso</option></select></label>
+            <label>Estado para todas<select id="bulkStatus"><option value="">No cambiar</option><option value="pending">Pendiente</option><option value="paid">Pagado / Cobrado</option></select></label>
+            <label>Categoría para todas<select id="bulkCategory"><option value="">No cambiar</option></select></label>
+            <label>Medio para todas<select id="bulkPayment"><option value="">No cambiar</option><option value="unspecified">Sin definir</option><option value="cash">Efectivo</option><option value="transfer">Transferencia</option><option value="check">Cheque</option><option value="echeck">Cheque electrónico / E-cheq</option></select></label>
+            <label>Cuenta para todas<select id="bulkAccount"><option value="">No cambiar</option></select></label>
+            <button class="btn secondary bulk-apply" id="applyBulkBtn" type="button">Aplicar selección a todas</button>
+          </div>
+          <div class="table-wrap import-table-wrap"><table class="import-table"><thead><tr><th>Validación</th><th>Fila</th><th>Tipo</th><th>Estado</th><th>Proveedor / Cliente</th><th>Empleado</th><th>Categoría</th><th>Monto</th><th>Fecha</th><th>Vencimiento</th><th>Medio</th><th>Últimos 5 cheque / E-cheq</th><th>Cuenta salida / entrada</th><th></th></tr></thead><tbody id="importTable"></tbody></table></div>
+          <div class="import-footer"><div><strong id="importReadyText">0 movimientos listos</strong><p class="hint">Nada se guarda hasta tocar Confirmar importación.</p></div><button class="btn primary" id="confirmImportBtn" type="button" disabled>Confirmar importación</button></div>
+        </article>
+      </section>
+
+      <section id="page-bankcontrol" class="page">
+        <div class="section-head"><div><h3>Control bancario</h3><p>Compará los cheques y transferencias cargados en la app contra el extracto del banco.</p></div></div>
+        <article class="panel bank-upload-panel">
+          <div class="import-upload">
+            <label>Extracto del banco (.csv)<input id="bankFile" type="file" accept=".csv,text/csv"></label>
+            <label>Cuenta que corresponde<select id="bankAccountSelect"><option value="">Todas / sin asignar</option></select></label>
+            <button class="btn primary" id="bankImportBtn" type="button">Cargar extracto</button>
+            <label>Extracto a controlar<select id="bankBatch"><option value="">Sin extractos</option></select></label>
+            <button class="btn ghost" id="bankDeleteBatchBtn" type="button">Eliminar extracto</button>
+          </div>
+          <p id="bankImportInfo" class="hint">El archivo bancario se usa solo para control. No genera ingresos ni egresos automáticamente.</p>
+        </article>
+
+        <div class="bank-tabs">
+          <button class="btn secondary bank-kind active" data-bank-kind="checks" type="button">Cheques / E-cheqs · código 9</button>
+          <button class="btn secondary bank-kind" data-bank-kind="transfers" type="button">Transferencias · código 990</button>
+        </div>
+
+        <div class="alert-grid bank-summary-grid">
+          <div class="mini-card"><span>Banco</span><strong id="bankTotal">0</strong></div>
+          <div class="mini-card"><span>Controlados</span><strong id="bankControlled">0</strong></div>
+          <div class="mini-card"><span>Coincidencias sugeridas</span><strong id="bankSuggested">0</strong></div>
+          <div class="mini-card danger"><span>Sin encontrar en la app</span><strong id="bankMissing">0</strong></div>
+        </div>
+
+        <article class="panel">
+          <div class="panel-head wrap"><div><h3 id="bankTableTitle">Cheques / E-cheqs del banco</h3><p>El tilde de control también marca como controlado el movimiento original de la app.</p></div><div class="toolbar"><select id="bankStatus"><option value="">Todos</option><option value="controlled">Controlados</option><option value="linked">Vinculados sin controlar</option><option value="suggested">Coincidencia sugerida</option><option value="ambiguous">Revisar coincidencia</option><option value="missing">No encontrado en la app</option><option value="uncontrolled">Sin controlar</option></select></div></div>
+          <div class="table-wrap"><table class="bank-table"><thead><tr><th>Control</th><th>Fecha banco</th><th>Código</th><th>Concepto banco</th><th>N° banco / últimos 5</th><th>Monto</th><th>Movimiento de la app</th><th>Resultado</th></tr></thead><tbody id="bankTable"></tbody></table></div>
+        </article>
+
+        <article class="panel bank-app-only-panel">
+          <div class="panel-head"><div><h3 id="bankAppOnlyTitle">Cargados en la app sin coincidencia bancaria</h3><p>Sirve para detectar cheques todavía no debitados o movimientos que conviene revisar.</p></div><strong id="bankAppOnlyCount">0</strong></div>
+          <div class="table-wrap"><table><thead><tr><th>Fecha</th><th>Proveedor / Cliente</th><th>Categoría</th><th>Monto</th><th>Medio</th><th>Últimos 5 cheque</th><th>Estado</th></tr></thead><tbody id="bankAppOnlyTable"></tbody></table></div>
+        </article>
+      </section>
+
+      <section id="page-reports" class="page">
+        <div class="section-head"><div><h3>Reportes</h3><p>Descargá los movimientos para analizar o archivar.</p></div></div>
+        <article class="panel report-panel">
+          <div class="filters"><label>Desde<input type="date" id="reportFrom"></label><label>Hasta<input type="date" id="reportTo"></label></div>
+          <div class="report-actions"><button class="btn primary" id="excelBtn">⬇ Descargar Excel</button><button class="btn secondary" id="pdfBtn">⬇ Descargar PDF</button></div>
+          <p class="hint">El Excel incluye el detalle completo. El PDF es un resumen operativo para consulta rápida.</p>
+          <div class="storage-box">
+            <div><strong>Respaldo de datos</strong><p id="storageStatus" class="hint">Consultando conexión con MongoDB…</p></div>
+            <button class="btn secondary" id="backupBtn" type="button">⬇ Descargar backup JSON</button>
+          </div>
+        </article>
+      </section>
+    </main>
+  </div>
+
+  <dialog id="txDialog" class="modal">
+    <form id="txForm" method="dialog">
+      <div class="modal-head"><div><h3 id="txDialogTitle">Nuevo movimiento</h3><p id="txOriginText">Carga manual</p></div><button type="button" class="icon-btn close-dialog">×</button></div>
+      <input type="hidden" id="txId"><input type="hidden" id="txSource" value="manual">
+      <div class="form-grid">
+        <label>Tipo<select id="fType" required><option value="expense">Egreso</option><option value="income">Ingreso</option></select></label>
+        <label>Estado<select id="fStatus" required><option value="pending">Pendiente</option><option value="paid">Pagado / Cobrado</option><option value="cancelled">Cancelado</option></select></label>
+        <label id="counterpartyField" class="span2">Cliente / proveedor<input id="fCounterparty" list="providerNames" required placeholder="Ej. YPF"></label>
+        <label>Categoría<select id="fCategory" required></select></label>
+        <label id="employeeField" class="span2 hidden">Empleado<input id="fEmployee" list="employeeNames" placeholder="Elegir o escribir empleado"></label>
+        <label>Monto<input id="fAmount" type="number" min="0" step="0.01" required placeholder="0"></label>
+        <label>Fecha de carga / operación<input id="fDate" type="date" required></label>
+        <label>Fecha de vencimiento / cobro<input id="fDueDate" type="date" required></label>
+        <label>Medio de pago<select id="fPaymentMethod"><option value="unspecified">Sin definir</option><option value="cash">Efectivo</option><option value="transfer">Transferencia</option><option value="check">Cheque</option><option value="echeck">Cheque electrónico / E-cheq</option></select></label><label id="checkNumberField" class="hidden">Últimos 5 dígitos del cheque / E-cheq<input id="fCheckNumber" maxlength="5" inputmode="numeric" pattern="[0-9]{5}" placeholder="Ej. 45636"></label><label>Cuenta de salida / entrada<select id="fAccount" required><option value="">Elegir cuenta…</option></select></label>
+        <label class="span2">Notas<textarea id="fNotes" rows="2" placeholder="Opcional"></textarea></label>
+      </div>
+      <div id="voiceOriginal" class="voice-original hidden"></div>
+      <div class="modal-actions"><button type="button" class="btn ghost close-dialog">Cancelar</button><button type="submit" class="btn primary">Confirmar y guardar</button></div>
+    </form>
+  </dialog>
+
+  <dialog id="voiceDialog" class="modal voice-modal">
+    <div class="modal-head"><div><h3>Carga por voz</h3><p>Decime proveedor/cliente, monto, fecha, categoría, medio de pago y cuenta. Si es cheque o E-cheq, también podés decir sus últimos 5 dígitos. Después te muestro todo para confirmar.</p></div><button type="button" class="icon-btn close-dialog">×</button></div>
+    <div class="mic-circle" id="micCircle">🎙️</div>
+    <p id="voiceStatus" class="voice-status">Tocá “Escuchar” y hablá normalmente.</p>
+    <textarea id="voiceText" rows="4" placeholder="Ej.: Pago a YPF, categoría combustible, 3 millones 450 mil pesos para el 15 de octubre."></textarea>
+    <div class="modal-actions"><button class="btn voice" id="listenBtn" type="button">🎙️ Escuchar</button><button class="btn primary" id="interpretBtn" type="button">Interpretar</button></div>
+  </dialog>
+
+  <dialog id="installmentDialog" class="modal">
+    <form id="installmentForm" method="dialog">
+      <div class="modal-head"><div><h3>Compra en cuotas</h3><p>Se generan automáticamente todos los vencimientos mensuales.</p></div><button type="button" class="icon-btn close-dialog">×</button></div>
+      <div class="form-grid">
+        <label class="span2">Proveedor<input id="iCounterparty" list="providerNames" required placeholder="Elegir o escribir proveedor"></label>
+        <label>Categoría<select id="iCategory" required></select></label>
+        <label>Monto total<input id="iTotal" type="number" min="0" step="0.01" required></label>
+        <label>Cantidad de cuotas<input id="iCount" type="number" min="2" max="120" required></label>
+        <label>Primer vencimiento<input id="iFirstDue" type="date" required></label>
+        <label>Medio de pago<select id="iPaymentMethod"><option value="unspecified">Sin definir</option><option value="cash">Efectivo</option><option value="transfer">Transferencia</option><option value="check">Cheque</option><option value="echeck">Cheque electrónico / E-cheq</option></select></label>
+        <label id="installmentCheckField" class="span2 hidden">Últimos 5 dígitos de cada cheque / E-cheq<textarea id="iCheckNumbers" rows="2" placeholder="Uno por cuota, separados por coma. Ej.: 45636, 45637, 45638"></textarea></label>
+        <label>Cuenta de salida<select id="iAccount" required><option value="">Elegir cuenta…</option></select></label>
+        <label class="span2">Notas<input id="iNotes"></label>
+      </div>
+      <div class="modal-actions"><button type="button" class="btn ghost close-dialog">Cancelar</button><button type="submit" class="btn primary">Generar cuotas</button></div>
+    </form>
+  </dialog>
+
+  <dialog id="internalDialog" class="modal">
+    <form id="internalForm" method="dialog">
+      <div class="modal-head"><div><h3 id="internalDialogTitle">Transferencia entre cuentas propias</h3><p>Solo redistribuye dinero entre cuentas de Las Tres Marías.</p></div><button type="button" class="icon-btn close-dialog">×</button></div>
+      <input type="hidden" id="internalId">
+      <div class="form-grid">
+        <label>Cuenta de origen<select id="internalFrom" required></select></label>
+        <label>Cuenta de destino<select id="internalTo" required></select></label>
+        <label>Monto<input id="internalAmount" type="number" min="0" step="0.01" required></label>
+        <label>Fecha<input id="internalDate" type="date" required></label>
+        <label>Estado<select id="internalStatus"><option value="paid">Realizada</option><option value="pending">Pendiente</option><option value="cancelled">Cancelada</option></select></label>
+        <label class="span2">Notas<textarea id="internalNotes" rows="2"></textarea></label>
+      </div>
+      <div class="modal-actions"><button type="button" class="btn ghost close-dialog">Cancelar</button><button type="submit" class="btn primary">Guardar transferencia</button></div>
+    </form>
+  </dialog>
+
+  <dialog id="simpleDialog" class="modal"><form id="simpleForm" method="dialog"><div class="modal-head"><div><h3 id="simpleTitle">Nuevo</h3><p id="simpleSubtitle"></p></div><button type="button" class="icon-btn close-dialog">×</button></div><div id="simpleFields" class="form-grid"></div><div class="modal-actions"><button type="button" class="btn ghost close-dialog">Cancelar</button><button type="submit" class="btn primary">Guardar</button></div></form></dialog>
+
+  <datalist id="providerNames"></datalist>
+  <datalist id="employeeNames"></datalist>
+  <script src="/js/app.js"></script>
+</body>
+</html>

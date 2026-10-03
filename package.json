@@ -1,0 +1,25 @@
+{
+  "name": "las-tres-marias-finanzas",
+  "version": "10.0.0",
+  "private": true,
+  "description": "Gestión financiera de Las Tres Marías - Vercel + MongoDB Atlas + conciliación bancaria + cuentas propias + altas contextuales de terceros",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js",
+    "check": "node --check server.js && node --check lib/store.js && node --check public/js/app.js",
+    "migrate:json": "node scripts/migrate-local-json.js"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "dependencies": {
+    "cookie-parser": "^1.4.7",
+    "dotenv": "^16.4.7",
+    "exceljs": "^4.4.0",
+    "express": "^4.21.2",
+    "jsonwebtoken": "^9.0.2",
+    "mongodb": "^6.20.0",
+    "pdfkit": "^0.16.0"
+  }
+}
